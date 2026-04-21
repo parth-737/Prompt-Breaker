@@ -1,5 +1,6 @@
 import './globals.css'
 import { SessionProvider } from '../components/SessionProvider'
+import { Analytics } from '@vercel/analytics/next'
 
 export const metadata = {
   title:       'Prompt Breaker',
@@ -13,6 +14,7 @@ export default function RootLayout({ children }) {
         <SessionProvider>
           {children}
         </SessionProvider>
+        <Analytics />
       </body>
     </html>
   );
