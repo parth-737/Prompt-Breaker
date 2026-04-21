@@ -5,10 +5,10 @@ import bcrypt from 'bcryptjs'
 
 
 async function isAdmin() {
-  
+
   const cookieStore = await cookies()
-  const cookie      = cookieStore.get('admin-session')
-  
+  const cookie = cookieStore.get('admin-session')
+
   return cookie?.value === process.env.ADMIN_PASSWORD
 }
 export async function GET() {
@@ -39,8 +39,9 @@ export async function POST(req) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { teamId, teamName, password, college } = await req.json()
+  const { teamId, teamName, password, college, timerDuration } = await req.json()
 
+  // ✅ Validation FIRST
   if (!teamId || !teamName || !password) {
     return NextResponse.json(
       { error: 'teamId, teamName and password are required' },
@@ -48,6 +49,7 @@ export async function POST(req) {
     )
   }
 
+  // ✅ Check for existing team
   const existing = await pool.query(
     'SELECT id FROM teams WHERE team_id = $1',
     [teamId]
@@ -59,16 +61,19 @@ export async function POST(req) {
     )
   }
 
+  // ✅ Hash password
   const passwordHash = await bcrypt.hash(password, 10)
 
+  // ✅ Single insert with timerDuration
   const teamResult = await pool.query(
-    `INSERT INTO teams (team_id, team_name, password_hash, college)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO teams (team_id, team_name, password_hash, college, timer_duration)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING id`,
-    [teamId, teamName, passwordHash, college || '']
+    [teamId, teamName, passwordHash, college || '', timerDuration || 90]
   )
   const newTeamId = teamResult.rows[0].id
 
+  // Unlock all levels for the new team
   const levels = await pool.query('SELECT id FROM levels')
   for (const level of levels.rows) {
     await pool.query(
@@ -81,3 +86,4 @@ export async function POST(req) {
 
   return NextResponse.json({ ok: true, teamId })
 }
+

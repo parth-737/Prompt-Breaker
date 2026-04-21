@@ -1,8 +1,8 @@
 'use client'
-
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { signOut } from 'next-auth/react'
+import Timer from '@/components/Timer'
 
 const TIER_CONFIG = {
   easy: { label: 'Easy', color: 'text-green-400', border: 'border-green-400/30', pts: 100 },
@@ -49,15 +49,18 @@ export default function Sidebar({ session }) {
           {session?.user?.college}
         </p>
 
-        {/* Score display */}
-        <div className="bg-purple-500/10 border border-purple-500/20 rounded-lg px-3 py-2">
-          <p className="text-purple-300 font-mono text-xs tracking-widest mb-0.5">
+        {/* Score card */}
+        <div className="bg-purple-500/10 border border-purple-500/20 rounded-xl px-4 py-3 mb-3">
+          <p className="text-purple-300 font-mono text-xs tracking-widest mb-1">
             TOTAL SCORE
           </p>
-          <p className="text-white font-mono text-xl font-bold">
-            {totalPoints.toLocaleString()} <span className="text-purple-400 text-sm">pts</span>
+          <p className="text-white font-mono text-2xl font-bold leading-none">
+            {totalPoints.toLocaleString()}
+            <span className="text-purple-400 text-sm font-normal ml-1">pts</span>
           </p>
         </div>
+        {/* Timer */}
+        <Timer />
       </div>
 
       {/* Level navigation */}

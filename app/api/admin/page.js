@@ -1,32 +1,34 @@
 'use client'
 
-import { useState} from 'react'
+import { useState } from 'react'
+
 
 export default function AdminPage() {
-  const [authed,    setAuthed]    = useState(false)
-  const [password,  setPassword]  = useState('')
+  const [authed, setAuthed] = useState(false)
+  const [password, setPassword] = useState('')
   const [authError, setAuthError] = useState('')
-  const [teams,     setTeams]     = useState([])
-  const [loading,   setLoading]   = useState(false)
-  const [message,   setMessage]   = useState({ text: '', type: '' })
+  const [teams, setTeams] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState({ text: '', type: '' })
   const [activeTab, setActiveTab] = useState('teams')
 
   // New team form state
-  const [newTeamId,   setNewTeamId]   = useState('')
+  const [newTeamId, setNewTeamId] = useState('')
   const [newTeamName, setNewTeamName] = useState('')
   const [newPassword, setNewPassword] = useState('')
-  const [newCollege,  setNewCollege]  = useState('')
-  const [creating,    setCreating]    = useState(false)
+  const [newCollege, setNewCollege] = useState('')
+  const [newTimerDuration, setNewTimerDuration] = useState('90')
+  const [creating, setCreating] = useState(false)
 
   async function handleLogin(e) {
     e.preventDefault()
     setAuthError('')
 
     try {
-      const res  = await fetch('/api/admin/verify', {
-        method:  'POST',
+      const res = await fetch('/api/admin/verify', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ password })
+        body: JSON.stringify({ password })
       })
       const data = await res.json()
 
@@ -44,7 +46,7 @@ export default function AdminPage() {
   async function fetchTeams() {
     setLoading(true)
     try {
-      const res  = await fetch('/api/admin/teams')
+      const res = await fetch('/api/admin/teams')
       const data = await res.json()
       setTeams(data.teams || [])
     } catch (err) {
@@ -64,14 +66,15 @@ export default function AdminPage() {
     setCreating(true)
 
     try {
-      const res  = await fetch('/api/admin/teams', {
-        method:  'POST',
+      const res = await fetch('/api/admin/teams', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          teamId:   newTeamId,
+        body: JSON.stringify({
+          teamId: newTeamId,
           teamName: newTeamName,
           password: newPassword,
-          college:  newCollege
+          college: newCollege,
+          timerDuration: parseInt(newTimerDuration) || 90
         })
       })
       const data = await res.json()
@@ -98,9 +101,9 @@ export default function AdminPage() {
 
     try {
       const res = await fetch(`/api/admin/teams/${teamDbId}`, {
-        method:  'PATCH',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ action: 'reset' })
+        body: JSON.stringify({ action: 'reset' })
       })
       if (res.ok) {
         showMessage(`Progress reset for "${teamName}".`, 'success')
@@ -202,7 +205,7 @@ export default function AdminPage() {
 
   // ── Admin dashboard ──
   const totalSolves = teams.reduce((s, t) => s + parseInt(t.levels_solved || 0), 0)
-  const totalPoints = teams.reduce((s, t) => s + parseInt(t.total_points  || 0), 0)
+  const totalPoints = teams.reduce((s, t) => s + parseInt(t.total_points || 0), 0)
 
   return (
     <main className="min-h-screen bg-black text-white px-6 py-8">
@@ -228,7 +231,7 @@ export default function AdminPage() {
               &gt; REFRESH
             </button>
             <a
-            
+
               href="/leaderboard"
               target="_blank"
               rel="noopener noreferrer"
@@ -255,8 +258,8 @@ export default function AdminPage() {
         <div className="grid grid-cols-3 gap-4 mb-8">
           {[
             { label: 'TEAMS REGISTERED', value: teams.length },
-            { label: 'TOTAL SOLVES',     value: totalSolves  },
-            { label: 'POINTS AWARDED',   value: totalPoints.toLocaleString() }
+            { label: 'TOTAL SOLVES', value: totalSolves },
+            { label: 'POINTS AWARDED', value: totalPoints.toLocaleString() }
           ].map(stat => (
             <div
               key={stat.label}
@@ -292,8 +295,8 @@ export default function AdminPage() {
         {/* ── Tabs ── */}
         <div className="flex gap-2 mb-6">
           {[
-            { key: 'teams',    label: 'ALL TEAMS'      },
-            { key: 'register', label: 'REGISTER TEAM'  }
+            { key: 'teams', label: 'ALL TEAMS' },
+            { key: 'register', label: 'REGISTER TEAM' }
           ].map(tab => (
             <button
               key={tab.key}
@@ -342,11 +345,11 @@ export default function AdminPage() {
               <div className="px-6 py-12 text-center">
                 <div className="flex gap-1 justify-center mb-3">
                   <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
-                        style={{ animationDelay: '0ms' }} />
+                    style={{ animationDelay: '0ms' }} />
                   <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
-                        style={{ animationDelay: '150ms' }} />
+                    style={{ animationDelay: '150ms' }} />
                   <span className="w-2 h-2 bg-purple-400 rounded-full animate-bounce"
-                        style={{ animationDelay: '300ms' }} />
+                    style={{ animationDelay: '300ms' }} />
                 </div>
                 <p className="text-white/20 font-mono text-xs">LOADING TEAMS...</p>
               </div>
@@ -363,7 +366,7 @@ export default function AdminPage() {
               <>
                 {teams.map((team) => {
                   const solved = parseInt(team.levels_solved || 0)
-                  const points = parseInt(team.total_points  || 0)
+                  const points = parseInt(team.total_points || 0)
 
                   return (
                     <div
@@ -528,6 +531,24 @@ export default function AdminPage() {
                                px-4 py-3 text-white font-mono text-sm
                                placeholder-white/20 focus:outline-none
                                focus:border-purple-500/50 transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-white/40 font-mono text-xs tracking-widest block mb-2">
+                    TIMER DURATION (MINUTES)
+                  </label>
+                  <input
+                    type="number"
+                    value={newTimerDuration}
+                    onChange={e => setNewTimerDuration(e.target.value)}
+                    placeholder="90"
+                    min="1"
+                    max="300"
+                    className="w-full bg-white/5 border border-white/10 rounded-xl
+               px-4 py-3 text-white font-mono text-sm
+               placeholder-white/20 focus:outline-none
+               focus:border-purple-500/50 transition-colors"
                   />
                 </div>
 

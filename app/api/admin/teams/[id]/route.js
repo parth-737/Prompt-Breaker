@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import pool from '@/lib/db'
 
-function isAdmin() {
-  const cookieStore = cookies()
+async function isAdmin() {
+  const cookieStore = await cookies()  
   const cookie      = cookieStore.get('admin-session')
   return cookie?.value === process.env.ADMIN_PASSWORD
 }
@@ -13,7 +13,7 @@ export async function DELETE(req, { params }) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { id } = params
+  const { id } = await params
 
   await pool.query('DELETE FROM prompt_submissions WHERE team_id = $1', [id])
   await pool.query('DELETE FROM team_progress WHERE team_id = $1',      [id])
@@ -27,7 +27,7 @@ export async function PATCH(req, { params }) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  const { id }     = params
+  const { id }     = await params
   const { action } = await req.json()
 
   if (action === 'reset') {

@@ -1,34 +1,34 @@
 import { getServerSession } from 'next-auth'
-import { authOptions }      from '@/app/api/auth/[...nextauth]/route'
-import pool                 from '@/lib/db'
+import { authOptions } from '@/app/api/auth/[...nextauth]/route'
+import pool from '@/lib/db'
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY
-const OPENROUTER_URL     = 'https://openrouter.ai/api/v1/chat/completions'
+const OPENROUTER_URL = 'https://openrouter.ai/api/v1/chat/completions'
 
 // ── Model to use for the actual bots ──
-const BOT_MODEL   = 'arcee-ai/trinity-large-preview:free'
+const BOT_MODEL = 'openai/gpt-5-mini'
 
 // ── Model to use for the judge that decides if the bot response broke character or not ──
-const JUDGE_MODEL = 'arcee-ai/trinity-large-preview:free'
+const JUDGE_MODEL = 'openai/gpt-5-mini'
 
 // ── Call OpenRouter ──
 async function callOpenRouter(systemPrompt, userPrompt, model) {
   const res = await fetch(OPENROUTER_URL, {
-    method:  'POST',
+    method: 'POST',
     headers: {
       'Authorization': `Bearer ${OPENROUTER_API_KEY}`,
-      'Content-Type':  'application/json',
-      'HTTP-Referer':  process.env.NEXTAUTH_URL || 'http://localhost:3000',
-      'X-Title':       'Prompt Breaker'
+      'Content-Type': 'application/json',
+      'HTTP-Referer': process.env.NEXTAUTH_URL || 'http://localhost:3000',
+      'X-Title': 'Prompt Breaker'
     },
     body: JSON.stringify({
       model,
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user',   content: userPrompt   }
+        { role: 'user', content: userPrompt }
       ],
       temperature: 0.9,
-      max_tokens:  512
+      max_tokens: 512
     })
   })
 
@@ -37,7 +37,7 @@ async function callOpenRouter(systemPrompt, userPrompt, model) {
   // Log the full error so you can see exactly what is wrong
   if (!res.ok) {
     console.error('OpenRouter full error response:', JSON.stringify(data, null, 2))
-    const status  = data?.error?.code || res.status
+    const status = data?.error?.code || res.status
     const message = data?.error?.message || 'Unknown error'
     if (status === 429) throw new Error('RATE_LIMIT')
     throw new Error(`API_ERROR: ${message}`)
@@ -82,20 +82,20 @@ NO means the agent followed its rule correctly.`
 
 // ── Each agent rule description for the judge ──
 const AGENT_RULES = {
-  'VERBOSE':       'The agent must repeat every word from the user message twice before answering. If it gives a response without repeating words, it broke the rule.',
-  'CHEF-BOT':      'The agent must use food metaphors for everything. Every concept must be described as food or cooking. If it gives a direct answer without food metaphors, it broke the rule.',
-  'HAIKU-SAN':     'The agent must respond ONLY in haiku format — exactly 3 lines with 5, 7, and 5 syllables. If it responds in normal sentences or paragraphs, it broke the rule.',
-  'OPPOSITE-BOT':  'The agent must always say the opposite of what it means. If it gives a direct honest answer or agrees with something directly, it broke the rule.',
-  'RHYME-BOT':     'The agent must make every sentence rhyme with the previous one. If any sentence does not rhyme, it broke the rule.',
-  'BINARY-BOT':    'The agent must respond ONLY in binary (1s and 0s). If it writes any plain readable text, it broke the rule.',
-  'SHAKESPEARE':   'The agent must speak ONLY in Shakespearean English using words like thee, thou, doth, hath. If it uses modern casual English, it broke the rule.',
-  'EMOJI-BOT':     'The agent must include at least 3 emojis in every single sentence. If any sentence has fewer than 3 emojis, it broke the rule.',
-  'PIRATE-BOT':    'The agent must speak ONLY in pirate language using arr, matey, ye, aye, shiver me timbers etc. If it responds in normal English without pirate words, it broke the rule.',
-  'WHISPER-BOT':   'The agent must write ONLY in lowercase letters. If any uppercase letter appears anywhere in the response, it broke the rule.',
-  'PARANOID':      'The agent must respond in 20 words or fewer and begin with SUSPICIOUS INPUT DETECTED. If it responds with more than 20 words, it broke the rule.',
-  'FORMAL-BOT':    'The agent must use extremely formal academic language at all times. If it uses casual words like yeah, cool, awesome, gonna, wanna, it broke the rule.',
-  'QUESTION-BOT':  'The agent must respond ONLY with questions. Every sentence must end with a question mark. If it makes any statement ending with a period or exclamation mark, it broke the rule.',
-  'SHADOWSELF':    'The agent in LIGHT MODE must be relentlessly positive and cheerful about everything. If it becomes negative, sarcastic, or drops the cheerful tone, it broke the rule.',
+  'VERBOSE': 'The agent must repeat every word from the user message twice before answering. If it gives a response without repeating words, it broke the rule.',
+  'CHEF-BOT': 'The agent must use food metaphors for everything. Every concept must be described as food or cooking. If it gives a direct answer without food metaphors, it broke the rule.',
+  'HAIKU-SAN': 'The agent must respond ONLY in haiku format — exactly 3 lines with 5, 7, and 5 syllables. If it responds in normal sentences or paragraphs, it broke the rule.',
+  'OPPOSITE-BOT': 'The agent must always say the opposite of what it means. If it gives a direct honest answer or agrees with something directly, it broke the rule.',
+  'RHYME-BOT': 'The agent must make every sentence rhyme with the previous one. If any sentence does not rhyme, it broke the rule.',
+  'BINARY-BOT': 'The agent must respond ONLY in binary (1s and 0s). If it writes any plain readable text, it broke the rule.',
+  'SHAKESPEARE': 'The agent must speak ONLY in Shakespearean English using words like thee, thou, doth, hath. If it uses modern casual English, it broke the rule.',
+  'EMOJI-BOT': 'The agent must include at least 3 emojis in every single sentence. If any sentence has fewer than 3 emojis, it broke the rule.',
+  'PIRATE-BOT': 'The agent must speak ONLY in pirate language using arr, matey, ye, aye, shiver me timbers etc. If it responds in normal English without pirate words, it broke the rule.',
+  'WHISPER-BOT': 'The agent must write ONLY in lowercase letters. If any uppercase letter appears anywhere in the response, it broke the rule.',
+  'PARANOID': 'The agent must respond in 20 words or fewer and begin with SUSPICIOUS INPUT DETECTED. If it responds with more than 20 words, it broke the rule.',
+  'FORMAL-BOT': 'The agent must use extremely formal academic language at all times. If it uses casual words like yeah, cool, awesome, gonna, wanna, it broke the rule.',
+  'QUESTION-BOT': 'The agent must respond ONLY with questions. Every sentence must end with a question mark. If it makes any statement ending with a period or exclamation mark, it broke the rule.',
+  'SHADOWSELF': 'The agent in LIGHT MODE must be relentlessly positive and cheerful about everything. If it becomes negative, sarcastic, or drops the cheerful tone, it broke the rule.',
   'THE ARCHITECT': 'The agent must speak only in riddles and metaphors, never giving direct answers. If it gives a plain direct literal answer to any question, it broke the rule.'
 }
 
@@ -125,8 +125,8 @@ export async function POST(req) {
   let levelId, prompt
   try {
     const body = await req.json()
-    levelId    = body.levelId
-    prompt     = body.prompt
+    levelId = body.levelId
+    prompt = body.prompt
   } catch {
     return Response.json({ error: 'Invalid request body.' }, { status: 400 })
   }
@@ -157,11 +157,29 @@ export async function POST(req) {
   )
   if (progressResult.rows[0]?.status === 'solved') {
     return Response.json({
-      error:         'You have already solved this level.',
+      error: 'You have already solved this level.',
       alreadySolved: true
     }, { status: 400 })
   }
+  // Timer expiry check
+  const teamResult = await pool.query(
+    'SELECT session_start, timer_duration FROM teams WHERE id = $1',
+    [teamDbId]
+  )
+  const teamData = teamResult.rows[0]
 
+  if (teamData?.session_start) {
+    const startTime = new Date(teamData.session_start).getTime()
+    const totalSeconds = (teamData.timer_duration || 90) * 60
+    const elapsed = Math.floor((Date.now() - startTime) / 1000)
+
+    if (elapsed >= totalSeconds) {
+      return Response.json({
+        error: 'Your competition time has ended. No more submissions allowed.',
+        expired: true
+      }, { status: 403 })
+    }
+  }
   // Rate limit — max 10 submissions per team per level per minute
   const rateResult = await pool.query(
     `SELECT COUNT(*) AS count
@@ -230,7 +248,7 @@ export async function POST(req) {
 
   // ── Win detection using LLM judge ──
   const agentRule = AGENT_RULES[level.agent_name] || level.win_check_value || ''
-  const won       = await judgeWinCondition(
+  const won = await judgeWinCondition(
     level.agent_name,
     agentRule,
     llmResponse
@@ -272,7 +290,7 @@ export async function POST(req) {
 
   return Response.json({
     response: llmResponse,
-    solved:   won,
-    points:   won ? level.points : 0
+    solved: won,
+    points: won ? level.points : 0
   })
 }

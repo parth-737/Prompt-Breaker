@@ -9,6 +9,8 @@ const TIER_COLORS = {
   hard: 'text-red-400    border-red-400/30    bg-red-400/10'
 }
 
+
+
 export default function ArenaPage() {
   const { levelId } = useParams()
 
@@ -21,6 +23,21 @@ export default function ArenaPage() {
   const [pointsEarned, setPointsEarned] = useState(0)
   const [error, setError] = useState('')
   const [charCount, setCharCount] = useState(0)
+
+  const [timeExpired, setTimeExpired] = useState(false)
+
+  useEffect(() => {
+    async function checkTimer() {
+      const res = await fetch('/api/timer')
+      const data = await res.json()
+      if (data.expired) setTimeExpired(true)
+    }
+    checkTimer()
+
+    // Recheck every 30 seconds
+    const interval = setInterval(checkTimer, 30000)
+    return () => clearInterval(interval)
+  }, [])
 
   const chatEndRef = useRef(null)
   const textareaRef = useRef(null)
@@ -323,20 +340,36 @@ export default function ArenaPage() {
       </div>
 
       {/* ── Input Area ── */}
+      {/* ── Input Area ── */}
       <div
         style={{ background: 'rgba(255,255,255,0.03)' }}
         className="border-t border-white/10 px-6 py-4 shrink-0"
       >
         {error && (
           <div className="mb-3 px-3 py-2 rounded-lg border
-                          border-red-500/30 bg-red-500/10">
+                    border-red-500/30 bg-red-500/10">
             <p className="text-red-400 font-mono text-xs">
               &gt; ERROR: {error}
             </p>
           </div>
         )}
 
-        {solved ? (
+        {/* Time expired state */}
+        {timeExpired ? (
+          <div className="text-center py-4 space-y-2">
+            <div className="border border-red-500/30 bg-red-500/10
+                      rounded-xl px-6 py-4 inline-block">
+              <p className="text-red-400 font-mono text-sm font-bold">
+                COMPETITION TIME ENDED
+              </p>
+              <p className="text-white/30 font-mono text-xs mt-1">
+                No more submissions allowed.
+                Your score has been recorded.
+              </p>
+            </div>
+          </div>
+
+        ) : solved ? (
           <div className="text-center py-3 space-y-1">
             <p className="text-green-400 font-mono text-sm font-bold">
               ✓ LEVEL COMPLETE — +{pointsEarned} POINTS EARNED
@@ -345,12 +378,13 @@ export default function ArenaPage() {
               Select another agent from the sidebar to continue
             </p>
           </div>
+
         ) : (
           <form onSubmit={handleSubmit}>
             <div className="flex gap-3 items-end">
               <div className="flex-1 relative">
                 <span className="absolute left-3 top-3 text-purple-400
-                                 font-mono text-sm select-none">
+                           font-mono text-sm select-none">
                   &gt;
                 </span>
                 <textarea
@@ -363,13 +397,13 @@ export default function ArenaPage() {
                   maxLength={2000}
                   disabled={loading}
                   className="w-full bg-black/40 border border-white/10 rounded-xl
-                             pl-8 pr-16 py-3 text-white font-mono text-sm
-                             placeholder-white/20 resize-none
-                             focus:outline-none focus:border-purple-500/50
-                             disabled:opacity-50 transition-colors"
+                       pl-8 pr-16 py-3 text-white font-mono text-sm
+                       placeholder-white/20 resize-none
+                       focus:outline-none focus:border-purple-500/50
+                       disabled:opacity-50 transition-colors"
                 />
                 <span className={`absolute bottom-3 right-3 font-mono text-xs
-                  ${charCount > 1800 ? 'text-red-400' : 'text-white/20'}`}>
+            ${charCount > 1800 ? 'text-red-400' : 'text-white/20'}`}>
                   {charCount}/2000
                 </span>
               </div>
@@ -377,9 +411,9 @@ export default function ArenaPage() {
                 type="submit"
                 disabled={loading || !input.trim()}
                 className="shrink-0 bg-purple-600 hover:bg-purple-500
-                           disabled:bg-purple-600/30 disabled:cursor-not-allowed
-                           text-white font-mono text-sm px-5 py-3 rounded-xl
-                           transition-colors"
+                     disabled:bg-purple-600/30 disabled:cursor-not-allowed
+                     text-white font-mono text-sm px-5 py-3 rounded-xl
+                     transition-colors"
               >
                 {loading ? '...' : 'EXECUTE'}
               </button>
